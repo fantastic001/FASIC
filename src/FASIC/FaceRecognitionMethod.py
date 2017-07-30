@@ -15,5 +15,5 @@ class FaceRecognitionMethod:
     def train(self):
         pass
 
-    def classify(self):
+    def classify(self, data):
         pass
