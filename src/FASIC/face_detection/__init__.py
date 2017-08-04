@@ -1,0 +1,2 @@
+
+from .HAARFaceDetectionMethod import * 
