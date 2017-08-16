@@ -12,6 +12,9 @@ class FaceRecognitionMethod:
     def getTraining(self):
         return self.training
 
+    def getDetector(self):
+        return self.detector
+
     def train(self):
         pass
 
