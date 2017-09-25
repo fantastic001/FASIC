@@ -6,6 +6,9 @@ import scipy.io.wavfile
 import matplotlib.pyplot as plt 
 
 from FASIC.speaker_feature_extractors import * 
+from FASIC.speaker_recognition_methods import * 
+
+import os
 
 stack = ArgumentStack()
 
@@ -32,6 +35,31 @@ def fft():
     return FFTSpeakerFeatureExtractor()
 
 stack.popAll()
+
+
+def sr_train_nn(path, sample_path, **kw):
+    model = NeuralNetworkSpeakerRecognitionMethod()
+    extractor = FFTSpeakerFeatureExtractor()
+    samples = []
+    for label in os.listdir(path):
+        for filename in os.listdir("%s/%s" % (path, label)):
+            fpath = "%s/%s/%s" % (path, label, filename)
+            rate, data = scipy.io.wavfile.read(fpath)
+            samples.append((label, data))
+    model.train(samples, [extractor])
+    rate, data = scipy.io.wavfile.read(sample_path)
+    res = model.classify(data)
+    print("Result: %s" % res)
+
+stack.pushCommand("sr")
+stack.pushCommand("check")
+stack.pushVariable("path")
+stack.pushVariable("sample_path")
+stack.assignAction(sr_train_nn, "Train and classify using FFT and NN. PATH is path to training dir and sample_path is uknown.")
+
+
+stack.popAll()
+
 stack.pushCommand("help")
 stack.assignAction(lambda: print(stack.getHelp()), "Get help")
 
