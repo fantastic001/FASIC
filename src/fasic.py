@@ -8,7 +8,14 @@ import matplotlib.pyplot as plt
 from FASIC.speaker_feature_extractors import * 
 from FASIC.speaker_recognition_methods import * 
 
+from FASIC.face_detection import * 
+from FASIC.face_recognition_methods import *
+
 import os
+
+import numpy as np
+import cv2
+
 
 stack = ArgumentStack()
 
@@ -60,6 +67,29 @@ stack.assignAction(sr_train_nn, "Train and classify using FFT and NN. PATH is pa
 
 stack.popAll()
 
+stack.pushCommand("fr")
+
+def fr_pca(training_path, sample_path, **kw):
+    samples = []
+    detector = HAARFaceDetectionMethod()
+    for label in os.listdir(training_path):
+        for filename in os.listdir("%s/%s" % (training_path, label)):
+            fpath = "%s/%s/%s" % (training_path, label, filename)
+            data = cv2.imread(fpath,0)
+            samples.append((label, data))
+    model = PCAFaceRecognitionMethod(detector, samples)
+    model.train()
+    data = cv2.imread(sample_path,0)
+    res = model.classify(data)
+    print("Result: %s" % res)
+
+stack.pushCommand("pca")
+stack.pushCommand("check")
+stack.pushVariable("training_path")
+stack.pushVariable("sample_path")
+stack.assignAction(fr_pca, "Train and classify by using PCA model.")
+
+stack.popAll()
 stack.pushCommand("help")
 stack.assignAction(lambda: print(stack.getHelp()), "Get help")
 
