@@ -43,16 +43,24 @@ def fft():
 
 stack.popAll()
 
-
-def sr_train_nn(path, sample_path, **kw):
-    model = NeuralNetworkSpeakerRecognitionMethod()
-    extractor = FFTSpeakerFeatureExtractor()
+def get_training(path, reader):
     samples = []
     for label in os.listdir(path):
         for filename in os.listdir("%s/%s" % (path, label)):
             fpath = "%s/%s/%s" % (path, label, filename)
-            rate, data = scipy.io.wavfile.read(fpath)
+            data = reader(fpath)
             samples.append((label, data))
+    return samples
+    
+
+def read_wav(fpath):
+    rate, data = scipy.io.wavfile.read(fpath)
+    return data
+    
+def sr_train_nn(path, sample_path, **kw):
+    model = NeuralNetworkSpeakerRecognitionMethod()
+    extractor = FFTSpeakerFeatureExtractor()
+    samples = get_training(path, read_wav)
     model.train(samples, [extractor])
     rate, data = scipy.io.wavfile.read(sample_path)
     res = model.classify(data)
@@ -70,13 +78,8 @@ stack.popAll()
 stack.pushCommand("fr")
 
 def fr_pca(training_path, sample_path, **kw):
-    samples = []
     detector = HAARFaceDetectionMethod()
-    for label in os.listdir(training_path):
-        for filename in os.listdir("%s/%s" % (training_path, label)):
-            fpath = "%s/%s/%s" % (training_path, label, filename)
-            data = cv2.imread(fpath,0)
-            samples.append((label, data))
+    samples = get_training(training_path, lambda x: cv2.imread(x,0))
     model = PCAFaceRecognitionMethod(detector, samples)
     model.train()
     data = cv2.imread(sample_path,0)
